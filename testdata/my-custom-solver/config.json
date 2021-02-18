@@ -1,0 +1,6 @@
+{
+  "apiTokenSecretRef": {
+    "name": "dode-secret",
+    "Key": "DODE_TOKEN"
+  }
+}
