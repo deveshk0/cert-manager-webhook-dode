@@ -48,5 +48,9 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{- define "cert-manager-webhook-dode.clusterIssuer" -}}
-{{ printf "%s-cluster-issuer" (include "cert-manager-webhook-dode.fullname" .) }}
+{{- if .Values.clusterIssuer.nameOverride -}}
+    {{ .Values.clusterIssuer.nameOverride }}
+{{- else -}}
+    {{ printf "%s-cluster-issuer" (include "cert-manager-webhook-dode.fullname" .) }}
+{{- end }}
 {{- end -}}
