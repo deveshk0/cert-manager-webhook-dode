@@ -74,6 +74,7 @@ spec:
   - {{ include "cert-manager-webhook-dode.fullname" . }}
   - {{ include "cert-manager-webhook-dode.fullname" . }}.{{ .Release.Namespace }}
   - {{ include "cert-manager-webhook-dode.fullname" . }}.{{ .Release.Namespace }}.svc
+
 {{- if .Values.clusterIssuer.enabled }}
 ---
 
@@ -103,9 +104,8 @@ spec:
           groupName: {{ .Values.groupName }}
           solverName: dode
           config:
-            apiID: {{ required ".Values.secrets.apiID is required" .Values.secrets.apiID }}
             apiTokenSecretRef:
-              key: api-token
+              key: DODE_TOKEN
               name: {{ include "cert-manager-webhook-dode.fullname" . }}-secret
       {{- if .Values.clusterIssuer.selector }}
       selector:
