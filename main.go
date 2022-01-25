@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -42,9 +43,7 @@ func main() {
 }
 
 // DodeAPIURL represents the API endpoint to call.
-const DodeAPIURL="https://www.do.de/api/letsencrypt"
-
-
+const DodeAPIURL = "https://www.do.de/api/letsencrypt"
 
 // dodeDNSProviderSolver implements the provider-specific logic needed to
 // 'present' an ACME challenge TXT record for your own DNS provider.
@@ -97,7 +96,7 @@ func (c *dodeDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 		klog.Errorf("Failed to get API key %v: %v", ch.Config, err)
 		return err
 	}
-	_, err = c.makeRequest("GET", fmt.Sprintf("?token=%s&domain=%s&value=%s", apiKey,c.removeDOT(ch.ResolvedFQDN),ch.Key))
+	_, err = c.makeRequest("GET", fmt.Sprintf("?token=%s&domain=%s&value=%s", apiKey, c.removeDOT(ch.ResolvedFQDN), ch.Key))
 	if err != nil {
 		return err
 	}
@@ -122,7 +121,7 @@ func (c *dodeDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 		klog.Errorf("Failed to get API key %v: %v", ch.Config, err)
 		return err
 	}
-	_, err = c.makeRequest("GET", fmt.Sprintf("?token=%s&domain=%s&action=delete", apiKey,c.removeDOT(ch.ResolvedFQDN)))
+	_, err = c.makeRequest("GET", fmt.Sprintf("?token=%s&domain=%s&action=delete", apiKey, c.removeDOT(ch.ResolvedFQDN)))
 	if err != nil {
 		return err
 	}
@@ -150,7 +149,6 @@ func (c *dodeDNSProviderSolver) Initialize(kubeClientConfig *rest.Config, stopCh
 	return nil
 }
 
-
 // loadConfig is a small helper function that decodes JSON configuration into
 // the typed config struct.
 func loadConfig(cfgJSON *extapi.JSON) (dodeDNSProviderConfig, error) {
@@ -166,14 +164,13 @@ func loadConfig(cfgJSON *extapi.JSON) (dodeDNSProviderConfig, error) {
 	return cfg, nil
 }
 
-
 // Get DODE API key from Kubernetes secret.
 func (c *dodeDNSProviderSolver) getAPIKey(cfg *dodeDNSProviderConfig, namespace string) (string, error) {
 	secretName := cfg.APITokenSecretRef.Name
 
 	klog.V(6).Infof("try to load secret `%s` with key `%s`", secretName, cfg.APITokenSecretRef.Key)
 
-	sec, err := c.client.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+	sec, err := c.client.CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("unable to get secret `%s`; %v", secretName, err)
 	}
@@ -188,13 +185,12 @@ func (c *dodeDNSProviderSolver) getAPIKey(cfg *dodeDNSProviderConfig, namespace 
 	return apiKey, nil
 }
 
-
 func (c *dodeDNSProviderSolver) makeRequest(method, uri string) (bool, error) {
 
 	// APIResponse represents a response from DODE API
 	type APIResponse struct {
-		Success bool            `json:"success"`
-		Error  string	        `json:"error"`
+		Success bool   `json:"success"`
+		Error   string `json:"error"`
 	}
 
 	client := http.Client{
@@ -216,14 +212,14 @@ func (c *dodeDNSProviderSolver) makeRequest(method, uri string) (bool, error) {
 	}
 
 	if !r.Success {
-		return false, fmt.Errorf("DODE API error for %s %q %s", method, uri , r.Error)
+		return false, fmt.Errorf("DODE API error for %s %q %s", method, uri, r.Error)
 	}
 
 	return r.Success, nil
 }
 
-func (c *dodeDNSProviderSolver) removeDOT(fqdnURL string) string{
-	if strings.HasSuffix(fqdnURL, "."){
+func (c *dodeDNSProviderSolver) removeDOT(fqdnURL string) string {
+	if strings.HasSuffix(fqdnURL, ".") {
 		return strings.TrimSuffix(fqdnURL, ".")
 	}
 	return fqdnURL
